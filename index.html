@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>또박또박 AI 글씨 코치</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#app" aria-label="또박또박 홈">
+        <span class="brand-mark">ㄱ</span>
+        <span>또박또박</span>
+      </a>
+      <nav class="top-actions" aria-label="주요 화면">
+        <button class="nav-pill active" data-view="practice">검사</button>
+        <button class="nav-pill" data-view="students">학생</button>
+        <button class="nav-pill" data-view="stats">통계</button>
+      </nav>
+    </header>
+
+    <main id="app" class="page">
+      <section class="hero-strip" aria-labelledby="hero-title">
+        <div class="hero-art" aria-hidden="true">
+          <div class="paper-stack">
+            <div class="paper paper-back"></div>
+            <div class="paper paper-front">
+              <span>가</span>
+              <span>나</span>
+              <span>다</span>
+            </div>
+          </div>
+          <div class="mascot">
+            <div class="face">
+              <span class="eye left"></span>
+              <span class="eye right"></span>
+              <span class="smile"></span>
+            </div>
+            <div class="pencil"></div>
+          </div>
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">AI handwriting coach</p>
+          <h1 id="hero-title">사진 한 장으로 글씨를 또박또박 확인해요.</h1>
+          <p>학생 글씨를 Gemini가 판독하고 정답 문장과 비교해 틀린 글자, 띄어쓰기, 가독성 점수, 선생님 메모까지 한 번에 정리합니다.</p>
+        </div>
+      </section>
+
+      <section class="workspace view active" id="practice-view">
+        <section class="panel capture-panel" aria-labelledby="capture-title">
+          <div class="panel-heading">
+            <div>
+              <p class="step-label">1단계</p>
+              <h2 id="capture-title">글씨 사진</h2>
+            </div>
+            <span class="status-chip" id="camera-status">밝은 곳에서 촬영</span>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              학생 이름
+              <input id="student-name" type="text" placeholder="예: 김도윤" />
+            </label>
+            <label>
+              번호
+              <input id="student-number" type="text" placeholder="예: 12" />
+            </label>
+          </div>
+
+          <div class="upload-zone" id="drop-zone">
+            <input id="image-input" type="file" accept="image/*" hidden />
+            <img id="preview-image" alt="업로드한 학생 글씨" />
+            <div class="upload-empty" id="upload-empty">
+              <div class="upload-icon">ㅏ</div>
+              <strong>사진을 올리거나 촬영하세요</strong>
+              <span>종이가 화면에 꽉 차고 그림자가 적으면 더 정확해요.</span>
+            </div>
+          </div>
+
+          <video id="camera-feed" playsinline></video>
+          <canvas id="camera-canvas" hidden></canvas>
+
+          <div class="button-row">
+            <button class="primary-button" id="choose-image" type="button">사진 선택</button>
+            <button class="outline-button" id="start-camera" type="button">카메라</button>
+            <button class="outline-button hidden" id="take-photo" type="button">촬영</button>
+          </div>
+        </section>
+
+        <section class="panel answer-panel" aria-labelledby="answer-title">
+          <div class="panel-heading">
+            <div>
+              <p class="step-label">2단계</p>
+              <h2 id="answer-title">정답 문장</h2>
+            </div>
+            <span class="status-chip blue">자동 대조</span>
+          </div>
+
+          <label>
+            따라쓴 문장
+            <textarea id="target-text" rows="5" placeholder="예: 바른 자세로 또박또박 글씨를 씁니다."></textarea>
+          </label>
+
+          <label>
+            선생님 피드백 메모
+            <textarea id="teacher-note" rows="5" placeholder="예: 받침을 조금 더 크게 쓰면 더 잘 읽혀요."></textarea>
+          </label>
+
+          <button class="primary-button wide" id="analyze-button" type="button">AI로 검사하기</button>
+          <p class="helper-text">Netlify 배포 후에는 환경변수 <strong>GEMINI_API_KEY</strong>로 Gemini 2.5 Flash가 연결됩니다. 로컬에서는 데모 분석으로 미리 확인할 수 있어요.</p>
+        </section>
+
+        <section class="panel result-panel" aria-labelledby="result-title">
+          <div class="panel-heading">
+            <div>
+              <p class="step-label">3단계</p>
+              <h2 id="result-title">검사 결과</h2>
+            </div>
+            <span class="score-badge" id="score-badge">--점</span>
+          </div>
+
+          <div class="result-box">
+            <p class="result-label">AI 판독</p>
+            <div class="recognized-text" id="recognized-text">아직 분석 전입니다.</div>
+          </div>
+
+          <div class="result-box">
+            <p class="result-label">정답 비교</p>
+            <div class="comparison" id="comparison-output">정답 문장을 입력하고 검사하면 글자별 결과가 표시됩니다.</div>
+          </div>
+
+          <div class="feedback-list" id="feedback-list">
+            <div class="feedback-item good">가이드: 종이를 정면으로 두고 밝게 촬영해 주세요.</div>
+          </div>
+
+          <div class="button-row">
+            <button class="primary-button" id="save-result" type="button">결과 저장</button>
+            <button class="outline-button" id="export-result" type="button">PDF/이미지</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="students-view">
+        <div class="section-heading">
+          <p class="eyebrow">student history</p>
+          <h2>학생별 제출 이력</h2>
+        </div>
+        <div class="history-grid" id="history-list"></div>
+      </section>
+
+      <section class="view" id="stats-view">
+        <div class="section-heading">
+          <p class="eyebrow">class dashboard</p>
+          <h2>반 전체 글씨 통계</h2>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-tile">
+            <span id="stat-count">0</span>
+            <p>저장된 제출</p>
+          </article>
+          <article class="stat-tile">
+            <span id="stat-average">--</span>
+            <p>평균 가독성</p>
+          </article>
+          <article class="stat-tile">
+            <span id="stat-common">--</span>
+            <p>자주 확인할 글자</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
